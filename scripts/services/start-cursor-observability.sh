@@ -6,11 +6,19 @@ source "${SCRIPT_DIR}/../lib.sh"
 
 PROJECT="/Users/oibaf/Projects/ai-agent/Cursor-dashboard"
 PORT=8081
-BIN="${PROJECT}/target/debug/cursor-server"
+MANAGER_PID="$(service_pid_file cursor-observability)"
+PROJECT_PID="/tmp/cursor-server-${PORT}.pid"
 
-if [[ ! -x "$BIN" ]]; then
-  echo "Building cursor-server…"
-  (cd "$PROJECT" && cargo build -p cursor-server)
+if [[ ! -f "${PROJECT}/.env" ]]; then
+  echo "Missing ${PROJECT}/.env — copy .env.example" >&2
+  exit 1
 fi
 
-start_background "cursor-observability" "$PORT" "$PROJECT" "$BIN"
+"${SCRIPT_DIR}/start-docker-desktop.sh"
+
+"${PROJECT}/scripts/start-server.sh"
+
+if [[ -f "$PROJECT_PID" ]]; then
+  ensure_dirs
+  cp "$PROJECT_PID" "$MANAGER_PID"
+fi

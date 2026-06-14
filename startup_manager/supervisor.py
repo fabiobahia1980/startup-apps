@@ -6,6 +6,7 @@ import subprocess
 from pathlib import Path
 
 from .config import LOG_DIR, PID_DIR, AppConfig, Service
+from .docker import ensure_daemon_running
 
 
 class SupervisorError(RuntimeError):
@@ -53,9 +54,22 @@ def start_service(config: AppConfig, service: Service) -> str:
             raise SupervisorError(result.stderr.strip() or result.stdout.strip())
         return f"Started brew service {service.brew_service}"
 
+    if service.manager == "docker-desktop":
+        if not service.start_script:
+            raise SupervisorError(f"{service.name} missing start_script")
+        result = _run_script(service.start_script)
+        if result.returncode != 0:
+            detail = result.stderr.strip() or result.stdout.strip()
+            raise SupervisorError(detail or f"Failed to start {service.name}")
+        return result.stdout.strip() or f"Started {service.name}"
+
     if service.manager == "docker":
         if not service.docker_compose_service:
             raise SupervisorError(f"{service.name} missing docker_compose_service")
+        try:
+            ensure_daemon_running()
+        except RuntimeError as exc:
+            raise SupervisorError(str(exc)) from exc
         result = subprocess.run(
             ["docker", "compose", "up", "-d", service.docker_compose_service],
             cwd=service.project,
@@ -95,6 +109,9 @@ def stop_service(service: Service) -> str:
             raise SupervisorError(result.stderr.strip() or result.stdout.strip())
         return f"Stopped brew service {service.brew_service}"
 
+    if service.manager == "docker-desktop":
+        return f"{service.name} left running (quit Docker Desktop from the menu bar app)"
+
     if service.manager == "docker":
         if not service.docker_compose_service:
             raise SupervisorError(f"{service.name} missing docker_compose_service")
@@ -128,13 +145,35 @@ def restart_service(config: AppConfig, service: Service) -> str:
 
 def start_autostart_services(config: AppConfig) -> list[str]:
     messages: list[str] = []
-    for service in config.services.values():
+    order = _autostart_order(config)
+    for service in order:
         if service.autostart:
             try:
                 messages.append(start_service(config, service))
             except SupervisorError as exc:
                 messages.append(f"{service.name}: {exc}")
     return messages
+
+
+def _autostart_order(config: AppConfig) -> list[Service]:
+    services = [s for s in config.services.values() if s.autostart]
+    by_id = {s.id: s for s in services}
+    visited: set[str] = set()
+    ordered: list[Service] = []
+
+    def visit(service: Service) -> None:
+        if service.id in visited:
+            return
+        for dep_id in service.depends_on:
+            dep = by_id.get(dep_id) or config.services.get(dep_id)
+            if dep and dep.autostart:
+                visit(dep)
+        visited.add(service.id)
+        ordered.append(service)
+
+    for service in services:
+        visit(service)
+    return ordered
 
 
 def _stop_by_pid(service: Service) -> str:
