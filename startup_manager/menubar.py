@@ -38,14 +38,16 @@ class StartupAppsMenuBar(rumps.App):
         total = len(statuses)
         self.title = f"{up}/{total}"
 
+        # rumps renders menu items bottom-to-top, so list actions in reverse order.
         items: list[rumps.MenuItem | None] = [
             None,
-            rumps.MenuItem("Open dashboard", callback=self.open_dashboard),
-            rumps.MenuItem("Refresh", callback=self.refresh_menu),
+            rumps.MenuItem("Quit manager…", callback=self.quit_app),
+            rumps.MenuItem("Start autostart services", callback=self.start_autostart),
             None,
+            rumps.MenuItem("Service status (tap to open UI)", callback=None),
         ]
 
-        for status in statuses:
+        for status in reversed(statuses):
             icon = {
                 ServiceState.UP: "✓",
                 ServiceState.DOWN: "✗",
@@ -64,9 +66,9 @@ class StartupAppsMenuBar(rumps.App):
         items.extend(
             [
                 None,
-                rumps.MenuItem("Start autostart services", callback=self.start_autostart),
+                rumps.MenuItem("Refresh", callback=self.refresh_menu),
+                rumps.MenuItem("Open dashboard", callback=self.open_dashboard),
                 None,
-                rumps.MenuItem("Quit", callback=self.quit_app),
             ]
         )
         self.menu = items
@@ -82,7 +84,17 @@ class StartupAppsMenuBar(rumps.App):
         return callback
 
     def quit_app(self, _: rumps.MenuItem) -> None:
-        rumps.quit_application()
+        if rumps.alert(
+            title="Quit Startup Apps manager?",
+            message=(
+                "This quits the menu bar icon and dashboard only.\n\n"
+                "OMLX, taOS, HA Agent, 9router, Lemonade, and Docker keep running.\n\n"
+                "The login startup agent will restart this manager automatically."
+            ),
+            ok="Quit manager",
+            cancel="Cancel",
+        ):
+            rumps.quit_application()
 
 
 def run_menubar() -> None:
