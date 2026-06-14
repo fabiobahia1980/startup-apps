@@ -13,6 +13,9 @@ Unified manager for local AI/observability services: login startup, menu bar sta
 | 9router | 20128 | http://127.0.0.1:20128/dashboard |
 | Lemonade | 13305 | http://127.0.0.1:13305/ |
 | **This dashboard** | **9090** | http://127.0.0.1:9090/ |
+| Docker Desktop | daemon | managed via dashboard |
+| Cursor Postgres | 5433 | docker container |
+| HA Postgres | 5432 | docker container |
 
 Secondary ports (documented in `config/services.yaml`):
 
@@ -46,6 +49,7 @@ config/services.yaml
 The dashboard shows:
 
 - Live health for each service
+- Docker Desktop daemon status and managed containers
 - Which process owns each port (`lsof`)
 - Registry conflicts (duplicate TCP assignments)
 - Start / stop / restart controls
@@ -75,5 +79,6 @@ Per-service scripts:
 ## Notes
 
 - **Lemonade** is `autostart: false` by default (optional GPU server). Enable in `services.yaml` if you want it at login.
+- **Docker Desktop** starts automatically at login (before Postgres containers). Enable **Start Docker Desktop when you log in** in Docker settings for faster startup.
 - **Postgres on 5432**: HA agent docker-compose maps Postgres to host port 5432. If Homebrew `postgresql@16` is already using 5432, either stop it or change the HA compose port mapping before enabling HA autostart.
 - **Dev UI port 8082** is shared by HA agent and Cursor dashboard Trunk dev servers — only one can use it at a time during development.

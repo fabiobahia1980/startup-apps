@@ -10,6 +10,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 
 from .config import load_config, visible_services
+from .docker import docker_overview
 from .health import ServiceState, check_all
 from .ports import collect_port_assignments, find_port_conflicts
 from .supervisor import SupervisorError, restart_service, start_autostart_services, start_service, stop_service
@@ -41,6 +42,7 @@ def _status_payload() -> dict[str, Any]:
             for conflict in find_port_conflicts(config)
         ],
         "dashboard_url": f"http://{config.dashboard_host}:{config.dashboard_port}",
+        "docker": docker_overview(config),
     }
 
 
@@ -174,7 +176,17 @@ DASHBOARD_HTML = """<!doctype html>
     .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
     .actions a { color: var(--accent); text-decoration: none; }
     .ports { margin-top: 20px; padding: 16px; }
-    .ports table { width: 100%; border-collapse: collapse; }
+    .docker { margin-top: 20px; padding: 16px; }
+    .docker-grid { display: grid; gap: 10px; margin-top: 12px; }
+    .docker-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+    }
+    .ports table, .docker table { width: 100%; border-collapse: collapse; }
     .ports th, .ports td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); }
     .conflict { color: var(--down); margin-top: 8px; }
     @media (max-width: 720px) {
@@ -193,6 +205,11 @@ DASHBOARD_HTML = """<!doctype html>
       <button onclick="autostart()">Start autostart services</button>
     </div>
     <div class="services" id="services"></div>
+    <div class="docker">
+      <h3>Docker</h3>
+      <div class="meta" id="docker-daemon"></div>
+      <div class="docker-grid" id="docker-containers"></div>
+    </div>
     <div class="ports">
       <h3>Port registry</h3>
       <div id="conflicts"></div>
@@ -216,8 +233,8 @@ DASHBOARD_HTML = """<!doctype html>
         <div class="service">
           <div>
             <h2>${service.name}</h2>
-            <div class="meta">:${service.port} · ${service.description}</div>
-            <div class="meta">PID ${service.pid ?? '—'} · ${service.latency_ms != null ? service.latency_ms + 'ms' : '—'} · ${service.health_detail ?? ''}</div>
+            <div class="meta">${service.port ? ':' + service.port : 'daemon'} · ${service.description}</div>
+            <div class="meta">${service.listener_command ? service.listener_command + ' · ' : ''}PID ${service.pid ?? '—'} · ${service.latency_ms != null ? service.latency_ms + 'ms' : '—'} · ${service.health_detail ?? ''}</div>
             <div class="actions">
               ${service.ui_url ? `<a href="${service.ui_url}" target="_blank">Open UI</a>` : ''}
               <a href="#" onclick="action('${service.id}', 'restart'); return false;">Restart</a>
@@ -226,6 +243,24 @@ DASHBOARD_HTML = """<!doctype html>
             </div>
           </div>
           <div class="badge ${service.state}">${service.state}</div>
+        </div>`).join('');
+      const docker = data.docker;
+      document.getElementById('docker-daemon').innerHTML =
+        `Daemon: <strong style="color:${docker.daemon.running ? 'var(--up)' : 'var(--down)'}">${docker.daemon.running ? 'running' : 'down'}</strong>` +
+        (docker.daemon.detail ? ` · ${docker.daemon.detail}` : '') +
+        ` · ${docker.summary.up}/${docker.summary.total} containers up`;
+      document.getElementById('docker-containers').innerHTML = docker.containers.map(c => `
+        <div class="docker-card">
+          <div>
+            <strong>${c.name}</strong>
+            <div class="meta">:${c.port} · ${c.container_name ?? c.compose_service} · ${c.status_text ?? ''}</div>
+            <div class="actions">
+              <a href="#" onclick="action('${c.service_id}', 'restart'); return false;">Restart</a>
+              <a href="#" onclick="action('${c.service_id}', 'stop'); return false;">Stop</a>
+              <a href="#" onclick="action('${c.service_id}', 'start'); return false;">Start</a>
+            </div>
+          </div>
+          <div class="badge ${c.state}">${c.state}</div>
         </div>`).join('');
       document.getElementById('ports').innerHTML = data.ports.map(p => `
         <tr><td>${p.port}</td><td>${p.service_name}</td><td>${p.label}</td><td>${p.protocol}</td></tr>`).join('');

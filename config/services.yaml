@@ -12,6 +12,17 @@ dashboard:
   host: 127.0.0.1
 
 services:
+  docker-desktop:
+    name: Docker Desktop
+    description: Container runtime for Postgres and other stack services
+    port: 0
+    health_path: null
+    ui_path: null
+    autostart: true
+    manager: docker-desktop
+    project: /Users/oibaf/Projects/startup-apps
+    start_script: scripts/services/start-docker-desktop.sh
+
   omlx:
     name: OMLX
     description: Local MLX inference server
@@ -51,9 +62,25 @@ services:
     project: /Users/oibaf/Projects/ai-agent/Cursor-dashboard
     start_script: scripts/services/start-cursor-observability.sh
     stop_script: scripts/services/stop-cursor-observability.sh
+    depends_on:
+      - postgres-cursor
     extra_ports:
       - port: 5433
         label: Postgres (docker)
+
+  postgres-cursor:
+    name: Cursor Postgres
+    description: Postgres for Cursor AI observability dashboard
+    port: 5433
+    health_path: null
+    ui_path: null
+    autostart: true
+    manager: docker
+    project: /Users/oibaf/Projects/ai-agent/Cursor-dashboard
+    docker_compose_service: postgres
+    depends_on:
+      - docker-desktop
+    hidden: true
 
   ha-agent:
     name: HA Agent Observability
@@ -79,6 +106,8 @@ services:
     manager: docker
     project: /Users/oibaf/Projects/ha-local-agent-mm
     docker_compose_service: postgres
+    depends_on:
+      - docker-desktop
     hidden: true
 
   nine-router:

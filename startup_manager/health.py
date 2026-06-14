@@ -8,6 +8,7 @@ from enum import Enum
 import httpx
 
 from .config import Service
+from .docker import inspect_container, is_daemon_running
 from .ports import PortListener, get_listener, is_port_listening, port_owner_matches
 
 
@@ -40,6 +41,60 @@ class ServiceStatus:
 
 
 async def check_service(service: Service, client: httpx.AsyncClient) -> ServiceStatus:
+    if service.manager == "docker-desktop":
+        return await _check_docker_desktop(service)
+    if service.manager == "docker":
+        return await _check_docker_container(service)
+    return await _check_http_service(service, client)
+
+
+async def _check_docker_desktop(service: Service) -> ServiceStatus:
+    daemon = await asyncio.to_thread(is_daemon_running)
+    state = ServiceState.UP if daemon.running else ServiceState.DOWN
+    return ServiceStatus(
+        id=service.id,
+        name=service.name,
+        description=service.description,
+        port=service.port,
+        state=state,
+        health_ok=daemon.running,
+        port_open=False,
+        pid=None,
+        listener_command=None,
+        managed_pid=None,
+        owner_match=None,
+        ui_url=service.ui_url,
+        health_url=service.health_url,
+        checked_at=datetime.now(UTC).isoformat(),
+        health_detail=daemon.detail,
+    )
+
+
+async def _check_docker_container(service: Service) -> ServiceStatus:
+    container = await asyncio.to_thread(inspect_container, service)
+    port_open = is_port_listening(service.port) if service.port else False
+    state = ServiceState(container.state)
+    health_ok = container.state == "up"
+    return ServiceStatus(
+        id=service.id,
+        name=service.name,
+        description=service.description,
+        port=service.port,
+        state=state,
+        health_ok=health_ok,
+        port_open=port_open,
+        pid=None,
+        listener_command=container.container_name,
+        managed_pid=None,
+        owner_match=None,
+        ui_url=service.ui_url,
+        health_url=service.health_url,
+        checked_at=datetime.now(UTC).isoformat(),
+        health_detail=container.status_text,
+    )
+
+
+async def _check_http_service(service: Service, client: httpx.AsyncClient) -> ServiceStatus:
     port_open = is_port_listening(service.port)
     listener = get_listener(service.port) if port_open else None
     managed_pid = _read_pid(service)
