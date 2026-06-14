@@ -24,7 +24,9 @@
   <key>EnvironmentVariables</key>
   <dict>
     <key>PATH</key>
-    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    <string>/Users/oibaf/Projects/lemonade/build:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    <key>LEMONADE_BIN</key>
+    <string>/Users/oibaf/Projects/lemonade/build/lemond</string>
   </dict>
 </dict>
 </plist>

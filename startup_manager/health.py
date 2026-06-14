@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import Enum
@@ -149,9 +150,16 @@ def _read_pid(service: Service) -> int | None:
     if not service.pid_file.exists():
         return None
     try:
-        return int(service.pid_file.read_text().strip())
+        pid = int(service.pid_file.read_text().strip())
     except ValueError:
+        service.pid_file.unlink(missing_ok=True)
         return None
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        service.pid_file.unlink(missing_ok=True)
+        return None
+    return pid
 
 
 def _derive_state(

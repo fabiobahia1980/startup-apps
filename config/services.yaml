@@ -128,7 +128,7 @@ services:
     port: 13305
     health_path: /api/v1/health
     ui_path: /
-    autostart: false
+    autostart: true
     manager: process
     project: /Users/oibaf/Projects/lemonade
     start_script: scripts/services/start-lemonade.sh

@@ -6,11 +6,12 @@ import threading
 from .config import load_config
 from .dashboard import run_dashboard
 from .menubar import run_menubar
-from .supervisor import ensure_state_dirs, start_autostart_services
+from .supervisor import ensure_state_dirs, start_autostart_with_retries
+from .watcher import start_autostart_watcher
 
 
 def _autostart_background(config) -> None:
-    messages = start_autostart_services(config)
+    messages = start_autostart_with_retries(config, passes=5, delay_seconds=20)
     for message in messages:
         print(message)
 
@@ -41,6 +42,7 @@ def main() -> None:
                 daemon=True,
                 name="autostart",
             ).start()
+            start_autostart_watcher(config)
         run_menubar()
 
 

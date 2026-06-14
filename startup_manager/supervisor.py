@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import asyncio
 import os
 import signal
 import subprocess
+import time
 from pathlib import Path
 
 from .config import LOG_DIR, PID_DIR, AppConfig, Service
 from .docker import ensure_daemon_running
+from .health import ServiceState, check_service
 
 
 class SupervisorError(RuntimeError):
@@ -144,15 +147,47 @@ def restart_service(config: AppConfig, service: Service) -> str:
 
 
 def start_autostart_services(config: AppConfig) -> list[str]:
+    return start_autostart_with_retries(config, passes=1)
+
+
+def start_autostart_with_retries(
+    config: AppConfig,
+    passes: int = 5,
+    delay_seconds: int = 20,
+) -> list[str]:
+    messages: list[str] = []
+    for attempt in range(1, passes + 1):
+        attempt_messages = _start_missing_autostart_services(config)
+        if attempt_messages:
+            messages.append(f"--- autostart pass {attempt}/{passes} ---")
+            messages.extend(attempt_messages)
+        if attempt < passes:
+            time.sleep(delay_seconds)
+    return messages
+
+
+def _start_missing_autostart_services(config: AppConfig) -> list[str]:
     messages: list[str] = []
     order = _autostart_order(config)
     for service in order:
-        if service.autostart:
-            try:
-                messages.append(start_service(config, service))
-            except SupervisorError as exc:
-                messages.append(f"{service.name}: {exc}")
+        if _service_is_up(service):
+            continue
+        try:
+            messages.append(start_service(config, service))
+        except SupervisorError as exc:
+            messages.append(f"{service.name}: {exc}")
     return messages
+
+
+def _service_is_up(service: Service) -> bool:
+    import httpx
+
+    async def _check() -> bool:
+        async with httpx.AsyncClient(timeout=3.0, follow_redirects=True) as client:
+            status = await check_service(service, client)
+            return status.state in {ServiceState.UP, ServiceState.DEGRADED}
+
+    return asyncio.run(_check())
 
 
 def _autostart_order(config: AppConfig) -> list[Service]:
