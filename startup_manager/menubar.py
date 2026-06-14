@@ -11,14 +11,17 @@ from .health import ServiceState, check_all
 from .supervisor import start_autostart_services
 
 
+APP_NAME = "StartupApps"
+
+
 class StartupAppsMenuBar(rumps.App):
     def __init__(self) -> None:
-        super().__init__("Apps", quit_button=None)
+        super().__init__(APP_NAME, title="…", quit_button=None)
         self.config = load_config()
         self.dashboard_url = f"http://{self.config.dashboard_host}:{self.config.dashboard_port}"
         run_dashboard_thread()
         self.refresh_menu(None)
-        self.timer = rumps.Timer(self.refresh_menu, 10)
+        self.timer = rumps.Timer(self.refresh_menu, 5)
         self.timer.start()
 
     def open_dashboard(self, _: rumps.MenuItem) -> None:
@@ -33,14 +36,9 @@ class StartupAppsMenuBar(rumps.App):
         statuses = asyncio.run(check_all(visible_services(self.config)))
         up = sum(1 for s in statuses if s.state == ServiceState.UP)
         total = len(statuses)
-        self.title = "●" if up == total else ("◐" if up else "○")
-
-        status_text = (
-            f"All {total} services up" if up == total else f"{up}/{total} services up"
-        )
+        self.title = f"{up}/{total}"
 
         items: list[rumps.MenuItem | None] = [
-            rumps.MenuItem(status_text, callback=None),
             None,
             rumps.MenuItem("Open dashboard", callback=self.open_dashboard),
             rumps.MenuItem("Refresh", callback=self.refresh_menu),
@@ -55,9 +53,10 @@ class StartupAppsMenuBar(rumps.App):
                 ServiceState.STARTING: "…",
                 ServiceState.UNKNOWN: "?",
             }[status.state]
+            port_label = f":{status.port}" if status.port else ""
             items.append(
                 rumps.MenuItem(
-                    f"{icon} {status.name} :{status.port}",
+                    f"{icon} {status.name}{port_label}",
                     callback=self.make_service_callback(status.id),
                 )
             )

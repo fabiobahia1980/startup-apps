@@ -99,7 +99,7 @@ services:
   postgres-ha:
     name: HA Postgres
     description: Postgres for HA agent audit/snapshots
-    port: 5432
+    port: 5434
     health_path: null
     ui_path: null
     autostart: true
