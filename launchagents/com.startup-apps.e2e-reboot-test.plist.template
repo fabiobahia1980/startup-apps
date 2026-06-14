@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.startup-apps.e2e-reboot-test</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>__E2E_SCRIPT__</string>
+    <string>--post-login</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>__STATE_DIR__/e2e-reboot.stdout.log</string>
+  <key>StandardErrorPath</key>
+  <string>__STATE_DIR__/e2e-reboot.stderr.log</string>
+</dict>
+</plist>

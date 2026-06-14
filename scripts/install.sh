@@ -23,6 +23,11 @@ echo "==> Installing Python dependencies"
 echo "==> Making scripts executable"
 chmod +x "${ROOT}/scripts/lib.sh"
 chmod +x "${ROOT}/scripts/services/"*.sh
+chmod +x "${ROOT}/scripts/doctor.sh"
+chmod +x "${ROOT}/scripts/fix-omlx-login-item.sh"
+chmod +x "${ROOT}/scripts/e2e-reboot-test.sh"
+chmod +x "${ROOT}/scripts/install-e2e-reboot-test.sh"
+chmod +x "${ROOT}/scripts/remove-e2e-reboot-test.sh"
 
 echo "==> Installing LaunchAgent"
 sed \

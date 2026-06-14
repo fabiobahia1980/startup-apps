@@ -25,7 +25,7 @@ services:
 
   omlx:
     name: OMLX
-    description: Local MLX inference server
+    description: Local MLX inference server (brew service; disable oMLX Login Item to avoid port 8000 conflict)
     port: 8000
     health_path: /v1/models
     ui_path: /admin

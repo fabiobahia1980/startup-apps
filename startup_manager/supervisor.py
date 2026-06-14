@@ -21,6 +21,16 @@ def ensure_state_dirs() -> None:
     LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 
+def _brew_service_running(brew_service: str) -> bool:
+    result = subprocess.run(
+        ["brew", "services", "info", brew_service],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    return result.returncode == 0 and "Running: true" in result.stdout
+
+
 def _run_script(script: Path, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
     if not script.exists():
         raise SupervisorError(f"Script not found: {script}")
@@ -47,6 +57,8 @@ def start_service(config: AppConfig, service: Service) -> str:
     if service.manager == "brew":
         if not service.brew_service:
             raise SupervisorError(f"{service.name} missing brew_service")
+        if _brew_service_running(service.brew_service):
+            return f"Brew service {service.brew_service} already running"
         result = subprocess.run(
             ["brew", "services", "start", service.brew_service],
             text=True,
