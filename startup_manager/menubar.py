@@ -11,9 +11,12 @@ from .health import ServiceState, check_all
 from .supervisor import start_autostart_services
 
 
+APP_NAME = "StartupApps"
+
+
 class StartupAppsMenuBar(rumps.App):
     def __init__(self) -> None:
-        super().__init__("–/–", quit_button=None)
+        super().__init__(APP_NAME, title="…", quit_button=None)
         self.config = load_config()
         self.dashboard_url = f"http://{self.config.dashboard_host}:{self.config.dashboard_port}"
         run_dashboard_thread()
