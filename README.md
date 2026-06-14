@@ -15,13 +15,13 @@ Unified manager for local AI/observability services: login startup, menu bar sta
 | **This dashboard** | **9090** | http://127.0.0.1:9090/ |
 | Docker Desktop | daemon | managed via dashboard |
 | Cursor Postgres | 5433 | docker container |
-| HA Postgres | 5432 | docker container |
+| HA Postgres | 5434 | docker container |
 
 Secondary ports (documented in `config/services.yaml`):
 
 - taOS LiteLLM proxy: 7834
 - taOS browser proxy: 6970
-- HA Postgres (docker): 5432
+- HA Postgres (docker): 5434 — avoids conflict with Homebrew Postgres on 5432
 - Cursor Postgres (docker): 5433
 
 ## Install
@@ -35,7 +35,7 @@ This will:
 
 1. Create a Python venv and install dependencies
 2. Install a LaunchAgent so the manager starts at login
-3. Show a menu bar icon (`●` all up, `◐` partial, `○` all down)
+3. Show a menu bar count (`7/7`) that refreshes every 5 seconds
 4. Serve the observability dashboard on port 9090
 
 ## Port management
@@ -80,5 +80,5 @@ Per-service scripts:
 
 - **Lemonade** autostarts at login using the built binary at `/Users/oibaf/Projects/lemonade/build/lemond`.
 - **Docker Desktop** starts automatically at login (before Postgres containers). Enable **Start Docker Desktop when you log in** in Docker settings for faster startup.
-- **Postgres on 5432**: HA agent docker-compose maps Postgres to host port 5432. If Homebrew `postgresql@16` is already using 5432, either stop it or change the HA compose port mapping before enabling HA autostart.
+- **HA Postgres** runs on host port **5434** (Docker maps `5434:5432`) so it does not conflict with Homebrew `postgresql@16` on 5432. Set `DATABASE_URL=...@127.0.0.1:5434/...` in `ha-local-agent-mm/.env`.
 - **Dev UI port 8082** is shared by HA agent and Cursor dashboard Trunk dev servers — only one can use it at a time during development.
