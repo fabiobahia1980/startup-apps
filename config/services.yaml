@@ -1,0 +1,110 @@
+# Canonical port registry for local startup apps.
+# The dashboard reads this file — do not assign duplicate ports.
+#
+# Reserved ranges:
+#   8000-8099  LLM / observability UIs
+#   13300-13399 Lemonade
+#   20100-20199 9router
+#   9090       startup-apps dashboard (this manager)
+
+dashboard:
+  port: 9090
+  host: 127.0.0.1
+
+services:
+  omlx:
+    name: OMLX
+    description: Local MLX inference server
+    port: 8000
+    health_path: /v1/models
+    ui_path: /admin
+    autostart: true
+    manager: brew
+    brew_service: jundot/omlx/omlx
+    project: /Users/oibaf/Projects/local-llm
+
+  taos:
+    name: taOS
+    description: Tiny Agent OS controller
+    port: 6969
+    health_path: /api/health
+    ui_path: /
+    autostart: true
+    manager: process
+    project: /Users/oibaf/Projects/taos
+    start_script: scripts/services/start-taos.sh
+    stop_script: scripts/services/stop-taos.sh
+    extra_ports:
+      - port: 7834
+        label: LiteLLM proxy
+      - port: 6970
+        label: Browser proxy
+
+  cursor-observability:
+    name: Cursor AI Observability
+    description: Cursor agent usage dashboard
+    port: 8081
+    health_path: /api/health
+    ui_path: /
+    autostart: true
+    manager: process
+    project: /Users/oibaf/Projects/ai-agent/Cursor-dashboard
+    start_script: scripts/services/start-cursor-observability.sh
+    stop_script: scripts/services/stop-cursor-observability.sh
+    extra_ports:
+      - port: 5433
+        label: Postgres (docker)
+
+  ha-agent:
+    name: HA Agent Observability
+    description: Home Assistant local agent dashboard
+    port: 8080
+    health_path: /api/health
+    ui_path: /
+    autostart: true
+    manager: process
+    project: /Users/oibaf/Projects/ha-local-agent-mm
+    start_script: scripts/services/start-ha-agent.sh
+    stop_script: scripts/services/stop-ha-agent.sh
+    depends_on:
+      - postgres-ha
+
+  postgres-ha:
+    name: HA Postgres
+    description: Postgres for HA agent audit/snapshots
+    port: 5432
+    health_path: null
+    ui_path: null
+    autostart: true
+    manager: docker
+    project: /Users/oibaf/Projects/ha-local-agent-mm
+    docker_compose_service: postgres
+    hidden: true
+
+  nine-router:
+    name: 9router
+    description: LLM routing hub and dashboard
+    port: 20128
+    health_path: /api/health
+    ui_path: /dashboard
+    autostart: true
+    manager: process
+    project: /Users/oibaf/Projects/9router
+    start_script: scripts/services/start-9router.sh
+    stop_script: scripts/services/stop-9router.sh
+
+  lemonade:
+    name: Lemonade
+    description: Lemonade SDK inference server
+    port: 13305
+    health_path: /api/v1/health
+    ui_path: /
+    autostart: false
+    manager: process
+    project: /Users/oibaf/Projects/lemonade
+    start_script: scripts/services/start-lemonade.sh
+    stop_script: scripts/services/stop-lemonade.sh
+    extra_ports:
+      - port: 13305
+        label: UDP beacon
+        protocol: udp
