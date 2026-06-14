@@ -81,4 +81,30 @@ Per-service scripts:
 - **Lemonade** autostarts at login using the built binary at `/Users/oibaf/Projects/lemonade/build/lemond`.
 - **Docker Desktop** starts automatically at login (before Postgres containers). Enable **Start Docker Desktop when you log in** in Docker settings for faster startup.
 - **HA Postgres** runs on host port **5434** (Docker maps `5434:5432`) so it does not conflict with Homebrew `postgresql@16` on 5432. Set `DATABASE_URL=...@127.0.0.1:5434/...` in `ha-local-agent-mm/.env`.
+- **OMLX** is started by the Homebrew service (`brew services start jundot/omlx/omlx`). If the **oMLX** app is also a macOS Login Item, it will try to start a second server on port 8000. Use the brew instance at http://127.0.0.1:8000/admin and remove the login item: `./scripts/fix-omlx-login-item.sh` (or System Settings → General → Login Items).
 - **Dev UI port 8082** is shared by HA agent and Cursor dashboard Trunk dev servers — only one can use it at a time during development.
+
+## Doctor
+
+Check for known autostart conflicts:
+
+```bash
+./scripts/doctor.sh
+```
+
+## Post-reboot e2e test
+
+Validate login autostart after a reboot:
+
+```bash
+# Run immediately (no wait)
+./scripts/e2e-reboot-test.sh
+
+# Install one-shot test that runs 120s after next login
+./scripts/install-e2e-reboot-test.sh
+
+# Remove one-shot agent after a successful run
+./scripts/remove-e2e-reboot-test.sh
+```
+
+Log: `~/.startup-apps/e2e-reboot.log`
