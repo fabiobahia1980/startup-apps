@@ -78,7 +78,7 @@ Per-service scripts:
 
 ## Notes
 
-- **Lemonade** is `autostart: false` by default (optional GPU server). Enable in `services.yaml` if you want it at login.
+- **Lemonade** autostarts at login using the built binary at `/Users/oibaf/Projects/lemonade/build/lemond`.
 - **Docker Desktop** starts automatically at login (before Postgres containers). Enable **Start Docker Desktop when you log in** in Docker settings for faster startup.
 - **Postgres on 5432**: HA agent docker-compose maps Postgres to host port 5432. If Homebrew `postgresql@16` is already using 5432, either stop it or change the HA compose port mapping before enabling HA autostart.
 - **Dev UI port 8082** is shared by HA agent and Cursor dashboard Trunk dev servers — only one can use it at a time during development.
