@@ -97,6 +97,8 @@ Check for known autostart conflicts and audit all registered TCP ports:
 
 Reports oMLX login-item conflicts, LaunchAgent and dashboard health, registry port conflicts, and live listener status per port.
 
+Run locally: `python scripts/validate.py` (also runs in GitHub Actions on push/PR to `main`).
+
 ## Post-reboot e2e test
 
 Validate login autostart after a reboot:

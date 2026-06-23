@@ -151,7 +151,7 @@ flowchart TD
 
 | Item                  | Value                                                                                               |
 | --------------------- | --------------------------------------------------------------------------------------------------- |
-| **GitHub Actions CI** | Validate `services.yaml` schema, Python imports, no duplicate ports on push                         |
+| **GitHub Actions CI** | Done    | `validate.py` on push — config schema, port conflicts, imports, compile |
 | **Path portability**  | Replace hardcoded `/Users/oibaf/Projects/...` paths with env vars or `~` expansion for new machines |
 | **Unit tests**        | `health.py`, `supervisor.py` brew-skip logic, port conflict detection                               |
 
