@@ -19,7 +19,7 @@ launchctl bootout "$LABEL" 2>/dev/null || true
 launchctl bootstrap "gui/$(id -u)" "$PLIST_DST"
 
 echo "Installed one-shot e2e reboot test."
-echo "  Runs at next login, waits 120s, validates 7/7 + HA db_connected"
+echo "  Runs at next login, waits 120s, validates all visible services + HA db_connected"
 echo "  Log: ${STATE_DIR}/e2e-reboot.log"
 echo ""
 echo "Run now:  ${ROOT}/scripts/e2e-reboot-test.sh"

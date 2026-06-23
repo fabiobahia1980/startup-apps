@@ -27,6 +27,9 @@ if [[ -f "$PIDFILE" ]]; then
   rm -f "$PIDFILE"
 fi
 
+pkill -f '/opt/homebrew/bin/9router' 2>/dev/null || true
+pkill -f '9router.*-p[ =]'"$PORT" 2>/dev/null || true
+
 if port_in_use "$PORT"; then
   listener_pid="$(lsof -tiTCP:"$PORT" -sTCP:LISTEN 2>/dev/null | head -1 || true)"
   if [[ -n "$listener_pid" ]]; then

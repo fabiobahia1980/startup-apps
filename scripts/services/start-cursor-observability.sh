@@ -14,7 +14,7 @@ if [[ ! -f "${PROJECT}/.env" ]]; then
   exit 1
 fi
 
-"${SCRIPT_DIR}/start-docker-desktop.sh"
+"${SCRIPT_DIR}/start-orbstack.sh"
 
 "${PROJECT}/scripts/start-server.sh"
 

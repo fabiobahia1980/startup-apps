@@ -51,31 +51,24 @@ def is_daemon_running() -> DockerDaemonStatus:
     return DockerDaemonStatus(running=True, detail=f"v{version}")
 
 
-def start_desktop(wait_seconds: int = 60) -> str:
-    apps = ["Docker", "Docker Desktop"]
-    launched = False
-    for app in apps:
-        result = subprocess.run(
-            ["open", "-a", app],
-            text=True,
-            capture_output=True,
-            check=False,
-        )
-        if result.returncode == 0:
-            launched = True
-            break
-
-    if not launched:
-        raise RuntimeError("Could not launch Docker Desktop")
+def start_orbstack(wait_seconds: int = 60) -> str:
+    result = subprocess.run(
+        ["open", "-a", "OrbStack"],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise RuntimeError("Could not launch OrbStack")
 
     for i in range(1, wait_seconds + 1):
         if is_daemon_running().running:
-            return f"Docker Desktop ready after {i}s"
+            return f"OrbStack ready after {i}s"
         if i == wait_seconds:
-            raise RuntimeError("Docker Desktop did not become ready in time")
+            raise RuntimeError("OrbStack did not become ready in time")
         subprocess.run(["sleep", "1"], check=False)
 
-    return "Docker Desktop started"
+    return "OrbStack started"
 
 
 def _compose_file(service: Service) -> Path:
@@ -207,4 +200,4 @@ def docker_overview(config: AppConfig) -> dict:
 def ensure_daemon_running() -> None:
     if is_daemon_running().running:
         return
-    start_desktop()
+    start_orbstack()

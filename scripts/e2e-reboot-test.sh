@@ -14,6 +14,12 @@ WAIT_SECONDS="${WAIT_SECONDS:-120}"
 MAX_ATTEMPTS="${MAX_ATTEMPTS:-30}"
 RETRY_SECONDS="${RETRY_SECONDS:-10}"
 
+EXPECTED_TOTAL="$(cd "${ROOT}" && "${ROOT}/.venv/bin/python" - <<'PY'
+from startup_manager.config import load_config, visible_services
+print(len(visible_services(load_config())))
+PY
+)"
+
 log() {
   printf '%s %s\n' "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" "$*" | tee -a "$LOG_FILE"
 }
@@ -55,12 +61,12 @@ summary = data["summary"]
 print(summary["up"], summary["total"])
 PY
 )"
-  if [[ "$up" == "$total" && "$total" == "7" ]]; then
+  if [[ "$up" == "$total" && "$total" == "$EXPECTED_TOTAL" ]]; then
     pass "Dashboard health ${up}/${total}"
     printf '%s\n' "$payload" >>"$LOG_FILE"
     return 0
   fi
-  log "Dashboard health ${up}/${total} (expected 7/7)"
+  log "Dashboard health ${up}/${total} (expected ${EXPECTED_TOTAL}/${EXPECTED_TOTAL})"
   return 1
 }
 
@@ -124,7 +130,7 @@ main() {
     ((attempt += 1))
   done
 
-  fail "Services did not reach 7/7 within $((WAIT_SECONDS + MAX_ATTEMPTS * RETRY_SECONDS))s"
+  fail "Services did not reach ${EXPECTED_TOTAL}/${EXPECTED_TOTAL} within $((WAIT_SECONDS + MAX_ATTEMPTS * RETRY_SECONDS))s"
 }
 
 main "$@"

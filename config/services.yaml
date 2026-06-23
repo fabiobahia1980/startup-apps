@@ -2,6 +2,7 @@
 # The dashboard reads this file — do not assign duplicate ports.
 #
 # Reserved ranges:
+#   3300-3399 OpenCode
 #   8000-8099  LLM / observability UIs
 #   13300-13399 Lemonade
 #   20100-20199 9router
@@ -12,16 +13,16 @@ dashboard:
   host: 127.0.0.1
 
 services:
-  docker-desktop:
-    name: Docker Desktop
-    description: Container runtime for Postgres and other stack services
+  orbstack:
+    name: OrbStack
+    description: Container runtime for Postgres and other stack services (replaces Docker Desktop)
     port: 0
     health_path: null
     ui_path: null
     autostart: true
-    manager: docker-desktop
+    manager: orbstack
     project: /Users/oibaf/Projects/startup-apps
-    start_script: scripts/services/start-docker-desktop.sh
+    start_script: scripts/services/start-orbstack.sh
 
   omlx:
     name: OMLX
@@ -79,7 +80,7 @@ services:
     project: /Users/oibaf/Projects/ai-agent/Cursor-dashboard
     docker_compose_service: postgres
     depends_on:
-      - docker-desktop
+      - orbstack
     hidden: true
 
   ha-agent:
@@ -107,12 +108,12 @@ services:
     project: /Users/oibaf/Projects/ha-local-agent-mm
     docker_compose_service: postgres
     depends_on:
-      - docker-desktop
+      - orbstack
     hidden: true
 
   nine-router:
     name: 9router
-    description: LLM routing hub and dashboard
+    description: LLM routing hub and dashboard (global CLI)
     port: 20128
     health_path: /api/health
     ui_path: /dashboard
@@ -121,6 +122,18 @@ services:
     project: /Users/oibaf/Projects/9router
     start_script: scripts/services/start-9router.sh
     stop_script: scripts/services/stop-9router.sh
+
+  opencode:
+    name: OpenCode
+    description: AI coding agent web interface
+    port: 3344
+    health_path: /
+    ui_path: /
+    autostart: true
+    manager: process
+    project: /Users/oibaf/Projects/opencode
+    start_script: scripts/services/start-opencode.sh
+    stop_script: scripts/services/stop-opencode.sh
 
   lemonade:
     name: Lemonade

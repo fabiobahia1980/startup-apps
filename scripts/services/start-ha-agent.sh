@@ -24,8 +24,9 @@ if [[ ! -f "${PROJECT}/frontend/dist/index.html" ]]; then
 fi
 
 if command -v docker >/dev/null 2>&1; then
+  "${SCRIPT_DIR}/start-orbstack.sh"
   if ! docker info >/dev/null 2>&1; then
-    echo "Docker is not running — required for HA Postgres on :${POSTGRES_PORT}" >&2
+    echo "OrbStack is not running — required for HA Postgres on :${POSTGRES_PORT}" >&2
     exit 1
   fi
   echo "Starting HA Postgres on host :${POSTGRES_PORT}…"

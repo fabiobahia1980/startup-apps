@@ -206,7 +206,7 @@ DASHBOARD_HTML = """<!doctype html>
     </div>
     <div class="services" id="services"></div>
     <div class="docker">
-      <h3>Docker</h3>
+      <h3>OrbStack</h3>
       <div class="meta" id="docker-daemon"></div>
       <div class="docker-grid" id="docker-containers"></div>
     </div>

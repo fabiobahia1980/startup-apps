@@ -5,6 +5,7 @@ import threading
 
 from .config import load_config
 from .dashboard import run_dashboard
+from .doctor import run_doctor
 from .menubar import run_menubar
 from .supervisor import ensure_state_dirs, start_autostart_with_retries
 from .watcher import start_autostart_watcher
@@ -22,7 +23,7 @@ def main() -> None:
         "command",
         nargs="?",
         default="menubar",
-        choices=["menubar", "dashboard", "autostart"],
+        choices=["menubar", "dashboard", "autostart", "doctor"],
         help="Run mode (default: menubar with dashboard in background)",
     )
     args = parser.parse_args()
@@ -30,7 +31,9 @@ def main() -> None:
     ensure_state_dirs()
     config = load_config()
 
-    if args.command == "dashboard":
+    if args.command == "doctor":
+        raise SystemExit(run_doctor())
+    elif args.command == "dashboard":
         run_dashboard()
     elif args.command == "autostart":
         _autostart_background(config)

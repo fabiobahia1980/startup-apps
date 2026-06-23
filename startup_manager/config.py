@@ -11,6 +11,7 @@ CONFIG_PATH = ROOT / "config" / "services.yaml"
 STATE_DIR = Path.home() / ".startup-apps"
 PID_DIR = STATE_DIR / "pids"
 LOG_DIR = STATE_DIR / "logs"
+STOPPED_DIR = STATE_DIR / "stopped"
 
 
 @dataclass

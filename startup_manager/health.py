@@ -42,14 +42,14 @@ class ServiceStatus:
 
 
 async def check_service(service: Service, client: httpx.AsyncClient) -> ServiceStatus:
-    if service.manager == "docker-desktop":
-        return await _check_docker_desktop(service)
+    if service.manager == "orbstack":
+        return await _check_orbstack(service)
     if service.manager == "docker":
         return await _check_docker_container(service)
     return await _check_http_service(service, client)
 
 
-async def _check_docker_desktop(service: Service) -> ServiceStatus:
+async def _check_orbstack(service: Service) -> ServiceStatus:
     daemon = await asyncio.to_thread(is_daemon_running)
     state = ServiceState.UP if daemon.running else ServiceState.DOWN
     return ServiceStatus(

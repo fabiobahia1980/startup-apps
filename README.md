@@ -11,9 +11,10 @@ Unified manager for local AI/observability services: login startup, menu bar sta
 | HA Agent Observability | 8080 | http://127.0.0.1:8080/ |
 | Cursor AI Observability | 8081 | http://127.0.0.1:8081/ |
 | 9router | 20128 | http://127.0.0.1:20128/dashboard |
+| OpenCode | 3344 | http://127.0.0.1:3344/ |
 | Lemonade | 13305 | http://127.0.0.1:13305/ |
 | **This dashboard** | **9090** | http://127.0.0.1:9090/ |
-| Docker Desktop | daemon | managed via dashboard |
+| OrbStack | daemon | managed via dashboard |
 | Cursor Postgres | 5433 | docker container |
 | HA Postgres | 5434 | docker container |
 
@@ -35,7 +36,7 @@ This will:
 
 1. Create a Python venv and install dependencies
 2. Install a LaunchAgent so the manager starts at login
-3. Show a menu bar count (`7/7`) that refreshes every 5 seconds
+3. Show a menu bar count (e.g. `8/8` for visible services) that refreshes every 5 seconds
 4. Serve the observability dashboard on port 9090
 
 ## Port management
@@ -49,7 +50,7 @@ config/services.yaml
 The dashboard shows:
 
 - Live health for each service
-- Docker Desktop daemon status and managed containers
+- OrbStack daemon status and managed containers
 - Which process owns each port (`lsof`)
 - Registry conflicts (duplicate TCP assignments)
 - Start / stop / restart controls
@@ -79,18 +80,20 @@ Per-service scripts:
 ## Notes
 
 - **Lemonade** autostarts at login using the built binary at `/Users/oibaf/Projects/lemonade/build/lemond`.
-- **Docker Desktop** starts automatically at login (before Postgres containers). Enable **Start Docker Desktop when you log in** in Docker settings for faster startup.
-- **HA Postgres** runs on host port **5434** (Docker maps `5434:5432`) so it does not conflict with Homebrew `postgresql@16` on 5432. Set `DATABASE_URL=...@127.0.0.1:5434/...` in `ha-local-agent-mm/.env`.
+- **OrbStack** starts automatically at login (before Postgres containers). Enable **Start at login** in OrbStack settings for faster startup. Uninstall Docker Desktop to avoid conflicts with the Docker socket.
+- **HA Postgres** runs on host port **5434** (OrbStack maps `5434:5432`) so it does not conflict with Homebrew `postgresql@16` on 5432. Set `DATABASE_URL=...@127.0.0.1:5434/...` in `ha-local-agent-mm/.env`.
 - **OMLX** is started by the Homebrew service (`brew services start jundot/omlx/omlx`). If the **oMLX** app is also a macOS Login Item, it will try to start a second server on port 8000. Use the brew instance at http://127.0.0.1:8000/admin and remove the login item: `./scripts/fix-omlx-login-item.sh` (or System Settings → General → Login Items).
 - **Dev UI port 8082** is shared by HA agent and Cursor dashboard Trunk dev servers — only one can use it at a time during development.
 
 ## Doctor
 
-Check for known autostart conflicts:
+Check for known autostart conflicts and audit all registered TCP ports:
 
 ```bash
 ./scripts/doctor.sh
 ```
+
+Reports oMLX login-item conflicts, LaunchAgent and dashboard health, registry port conflicts, and live listener status per port.
 
 ## Post-reboot e2e test
 

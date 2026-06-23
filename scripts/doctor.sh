@@ -4,6 +4,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ISSUES=0
+PORT_ISSUES=0
 
 warn() {
   printf 'WARN: %s\n' "$*"
@@ -45,12 +46,6 @@ else
   ok "oMLX Login Item not configured"
 fi
 
-if listener="$(port_listener 8000)"; then
-  ok "Port 8000 listener: ${listener}"
-else
-  warn "Nothing listening on port 8000"
-fi
-
 if launchctl print "gui/$(id -u)/com.startup-apps.manager" >/dev/null 2>&1; then
   ok "Startup Apps LaunchAgent loaded"
 else
@@ -61,6 +56,19 @@ if curl -fsS --max-time 3 http://127.0.0.1:9090/api/status >/dev/null 2>&1; then
   ok "Dashboard responding on :9090"
 else
   warn "Dashboard not responding on :9090"
+fi
+
+echo ""
+echo "==> Port registry"
+if [[ -x "${ROOT}/.venv/bin/python" ]]; then
+  PORT_ISSUES=0
+  (
+    cd "${ROOT}"
+    "${ROOT}/.venv/bin/python" -m startup_manager doctor
+  ) || PORT_ISSUES=$?
+  ISSUES=$((ISSUES + PORT_ISSUES))
+else
+  warn "Python venv not found (run ./scripts/install.sh)"
 fi
 
 echo ""

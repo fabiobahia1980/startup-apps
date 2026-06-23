@@ -7,7 +7,7 @@ import subprocess
 import time
 from pathlib import Path
 
-from .config import LOG_DIR, PID_DIR, AppConfig, Service
+from .config import LOG_DIR, PID_DIR, STOPPED_DIR, AppConfig, Service
 from .docker import ensure_daemon_running
 from .health import ServiceState, check_service
 
@@ -19,6 +19,24 @@ class SupervisorError(RuntimeError):
 def ensure_state_dirs() -> None:
     PID_DIR.mkdir(parents=True, exist_ok=True)
     LOG_DIR.mkdir(parents=True, exist_ok=True)
+    STOPPED_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _stopped_marker(service: Service) -> Path:
+    return STOPPED_DIR / service.id
+
+
+def is_manually_stopped(service: Service) -> bool:
+    return _stopped_marker(service).exists()
+
+
+def mark_manually_stopped(service: Service) -> None:
+    ensure_state_dirs()
+    _stopped_marker(service).touch()
+
+
+def clear_manually_stopped(service: Service) -> None:
+    _stopped_marker(service).unlink(missing_ok=True)
 
 
 def _brew_service_running(brew_service: str) -> bool:
@@ -49,6 +67,7 @@ def _run_script(script: Path, env: dict[str, str] | None = None) -> subprocess.C
 
 def start_service(config: AppConfig, service: Service) -> str:
     ensure_state_dirs()
+    clear_manually_stopped(service)
     for dep_id in service.depends_on:
         dep = config.services.get(dep_id)
         if dep:
@@ -69,7 +88,7 @@ def start_service(config: AppConfig, service: Service) -> str:
             raise SupervisorError(result.stderr.strip() or result.stdout.strip())
         return f"Started brew service {service.brew_service}"
 
-    if service.manager == "docker-desktop":
+    if service.manager == "orbstack":
         if not service.start_script:
             raise SupervisorError(f"{service.name} missing start_script")
         result = _run_script(service.start_script)
@@ -110,6 +129,7 @@ def start_service(config: AppConfig, service: Service) -> str:
 
 def stop_service(service: Service) -> str:
     ensure_state_dirs()
+    mark_manually_stopped(service)
 
     if service.manager == "brew":
         if not service.brew_service:
@@ -124,8 +144,8 @@ def stop_service(service: Service) -> str:
             raise SupervisorError(result.stderr.strip() or result.stdout.strip())
         return f"Stopped brew service {service.brew_service}"
 
-    if service.manager == "docker-desktop":
-        return f"{service.name} left running (quit Docker Desktop from the menu bar app)"
+    if service.manager == "orbstack":
+        return f"{service.name} left running (quit OrbStack from the menu bar app)"
 
     if service.manager == "docker":
         if not service.docker_compose_service:
@@ -182,6 +202,8 @@ def _start_missing_autostart_services(config: AppConfig) -> list[str]:
     messages: list[str] = []
     order = _autostart_order(config)
     for service in order:
+        if is_manually_stopped(service):
+            continue
         if _service_is_up(service):
             continue
         try:
