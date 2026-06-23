@@ -59,14 +59,13 @@ else
 fi
 
 echo ""
-echo "==> Port registry"
 if [[ -x "${ROOT}/.venv/bin/python" ]]; then
-  PORT_ISSUES=0
+  DOCTOR_ISSUES=0
   (
     cd "${ROOT}"
     "${ROOT}/.venv/bin/python" -m startup_manager doctor
-  ) || PORT_ISSUES=$?
-  ISSUES=$((ISSUES + PORT_ISSUES))
+  ) || DOCTOR_ISSUES=$?
+  ISSUES=$((ISSUES + DOCTOR_ISSUES))
 else
   warn "Python venv not found (run ./scripts/install.sh)"
 fi

@@ -17,7 +17,7 @@
 | Dashboard       | `[startup_manager/dashboard.py](startup_manager/dashboard.py)` — FastAPI on `:9090` with live status + controls                                                                       |
 | Menu bar        | `[startup_manager/menubar.py](startup_manager/menubar.py)` — dynamic `up/total`, notifications, start/stop all |
 | Notifications   | `[startup_manager/notifications.py](startup_manager/notifications.py)` — alert on health drop/recovery         |
-| Port doctor     | `[startup_manager/doctor.py](startup_manager/doctor.py)` — registry conflict detection + live listener audit per TCP port                                                             |
+| Port doctor     | `[startup_manager/doctor.py](startup_manager/doctor.py)` — OrbStack login, stale PID audit, port conflicts, live listeners |
 | Login autostart | `[startup_manager/__main__.py](startup_manager/__main__.py)` — 5-pass retry + `[startup_manager/watcher.py](startup_manager/watcher.py)` (45s interval)                               |
 | LaunchAgent     | `[launchagents/com.startup-apps.manager.plist.template](launchagents/com.startup-apps.manager.plist.template)` — `KeepAlive`, installed by `[scripts/install.sh](scripts/install.sh)` |
 
@@ -146,7 +146,7 @@ flowchart TD
 | --------------------------------- | ------- | ------------------------------------------------------------------ |
 | **Stop all services** menu action | Done    | Stops all managed apps; manager keeps running                      |
 | **macOS notifications**           | Done    | Alert on health drop/recovery (no repeat while still down)         |
-| **Expand doctor**                 | Partial | Port audit shipped; OrbStack login + stale PID checks remain       |
+| **Expand doctor**                 | Done    | OrbStack login, stale PID audit, port registry                       |
 
 ### Tier 3 — Engineering hygiene (optional)
 

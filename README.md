@@ -95,7 +95,7 @@ Check for known autostart conflicts and audit all registered TCP ports:
 ./scripts/doctor.sh
 ```
 
-Reports oMLX login-item conflicts, LaunchAgent and dashboard health, registry port conflicts, and live listener status per port.
+Reports oMLX login-item conflicts, LaunchAgent and dashboard health, OrbStack login/daemon status, stale pid files, registry port conflicts, and live listener status per port.
 
 Run locally: `python scripts/validate.py` and `python -m unittest discover -s tests -t . -v` (also runs in GitHub Actions on push/PR to `main`).
 
