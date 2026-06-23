@@ -15,7 +15,8 @@
 | Health checks   | `[startup_manager/health.py](startup_manager/health.py)` — HTTP, Docker, brew, port listener checks                                                                                   |
 | Service control | `[startup_manager/supervisor.py](startup_manager/supervisor.py)` — start/stop/restart by manager type                                                                                 |
 | Dashboard       | `[startup_manager/dashboard.py](startup_manager/dashboard.py)` — FastAPI on `:9090` with live status + controls                                                                       |
-| Menu bar        | `[startup_manager/menubar.py](startup_manager/menubar.py)` — dynamic `up/total` count, start/stop all, quit confirmation                          |
+| Menu bar        | `[startup_manager/menubar.py](startup_manager/menubar.py)` — dynamic `up/total`, notifications, start/stop all |
+| Notifications   | `[startup_manager/notifications.py](startup_manager/notifications.py)` — alert on health drop/recovery         |
 | Port doctor     | `[startup_manager/doctor.py](startup_manager/doctor.py)` — registry conflict detection + live listener audit per TCP port                                                             |
 | Login autostart | `[startup_manager/__main__.py](startup_manager/__main__.py)` — 5-pass retry + `[startup_manager/watcher.py](startup_manager/watcher.py)` (45s interval)                               |
 | LaunchAgent     | `[launchagents/com.startup-apps.manager.plist.template](launchagents/com.startup-apps.manager.plist.template)` — `KeepAlive`, installed by `[scripts/install.sh](scripts/install.sh)` |
@@ -125,7 +126,7 @@ flowchart TD
 - **OrbStack** replaces Docker Desktop; Docker Desktop uninstalled
 - **8/8** visible services healthy at login; reboot e2e validates dynamic count + `db_connected=true`
 - Doctor audits all registered TCP ports and reports conflicts
-- Menu bar: **Start autostart**, **Stop all services**, **Quit manager** (manager-only)
+- Menu bar: **Start autostart**, **Stop all services**, **Quit manager**, health drop/recovery notifications
 - OMLX: brew-managed at [http://127.0.0.1:8000/admin](http://127.0.0.1:8000/admin) (no Login Item)
 
 ---
@@ -144,16 +145,17 @@ flowchart TD
 | Item                              | Status  | Value                                                              |
 | --------------------------------- | ------- | ------------------------------------------------------------------ |
 | **Stop all services** menu action | Done    | Stops all managed apps; manager keeps running                      |
-| **macOS notifications**           | Pending | Alert when count drops below expected total                        |
+| **macOS notifications**           | Done    | Alert on health drop/recovery (no repeat while still down)         |
 | **Expand doctor**                 | Partial | Port audit shipped; OrbStack login + stale PID checks remain       |
 
 ### Tier 3 — Engineering hygiene (optional)
 
-| Item                  | Value                                                                                               |
-| --------------------- | --------------------------------------------------------------------------------------------------- |
-| **GitHub Actions CI** | Done    | `validate.py` on push — config schema, port conflicts, imports, compile |
-| **Path portability**  | Replace hardcoded `/Users/oibaf/Projects/...` paths with env vars or `~` expansion for new machines |
-| **Unit tests**        | `health.py`, `supervisor.py` brew-skip logic, port conflict detection                               |
+| Item                  | Status  | Value                                                                                               |
+| --------------------- | ------- | --------------------------------------------------------------------------------------------------- |
+| **GitHub Actions CI** | Done    | `validate.py` + unit tests on push                                                                  |
+| **Unit tests**        | Done    | Ports, health state, notifications, supervisor markers/order                                        |
+| **Path portability**  | Pending | Replace hardcoded `/Users/oibaf/Projects/...` paths with env vars or `~` expansion for new machines |
+| **GitHub Release notes** | Pending | Formal release body for `v1.0` on GitHub                                                         |
 
 ### Tier 4 — Not needed unless requirements change
 

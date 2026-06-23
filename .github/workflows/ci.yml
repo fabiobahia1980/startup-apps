@@ -21,3 +21,6 @@ jobs:
 
       - name: Validate config, imports, and compile
         run: python scripts/validate.py
+
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -t . -v

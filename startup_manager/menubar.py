@@ -8,6 +8,7 @@ import rumps
 from .config import load_config, visible_services
 from .dashboard import run_dashboard_thread
 from .health import ServiceState, check_all
+from .notifications import evaluate_health_alert
 from .supervisor import start_autostart_services, stop_all_services
 
 
@@ -19,6 +20,7 @@ class StartupAppsMenuBar(rumps.App):
         super().__init__(APP_NAME, title="…", quit_button=None)
         self.config = load_config()
         self.dashboard_url = f"http://{self.config.dashboard_host}:{self.config.dashboard_port}"
+        self._previous_up: int | None = None
         run_dashboard_thread()
         self.refresh_menu(None)
         self.timer = rumps.Timer(self.refresh_menu, 5)
@@ -52,6 +54,17 @@ class StartupAppsMenuBar(rumps.App):
         up = sum(1 for s in statuses if s.state == ServiceState.UP)
         total = len(statuses)
         self.title = f"{up}/{total}"
+
+        down_names = [s.name for s in statuses if s.state != ServiceState.UP]
+        alert = evaluate_health_alert(
+            previous_up=self._previous_up,
+            up=up,
+            total=total,
+            down_names=down_names,
+        )
+        if alert:
+            rumps.notification(alert.title, alert.subtitle, alert.message)
+        self._previous_up = up
 
         # rumps renders menu items bottom-to-top, so list actions in reverse order.
         items: list[rumps.MenuItem | None] = [

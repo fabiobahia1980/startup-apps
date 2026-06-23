@@ -23,6 +23,7 @@ IMPORT_MODULES = (
     "startup_manager.doctor",
     "startup_manager.dashboard",
     "startup_manager.watcher",
+    "startup_manager.notifications",
 )
 
 
