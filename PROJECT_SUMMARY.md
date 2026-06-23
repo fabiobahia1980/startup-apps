@@ -1,7 +1,7 @@
 # Startup Apps — Project Summary
 
 **Repo:** [github.com/fabiobahia1980/startup-apps](https://github.com/fabiobahia1980/startup-apps)  
-**Current state:** `main`, **8/8 visible services** in registry, dynamic e2e validation, expanded doctor port audit.
+**Release:** [`v1.0`](https://github.com/fabiobahia1980/startup-apps/releases/tag/v1.0) on `main` — **8/8 visible services**, OrbStack, OpenCode, port doctor, dynamic e2e.
 
 ---
 
@@ -15,7 +15,7 @@
 | Health checks   | `[startup_manager/health.py](startup_manager/health.py)` — HTTP, Docker, brew, port listener checks                                                                                   |
 | Service control | `[startup_manager/supervisor.py](startup_manager/supervisor.py)` — start/stop/restart by manager type                                                                                 |
 | Dashboard       | `[startup_manager/dashboard.py](startup_manager/dashboard.py)` — FastAPI on `:9090` with live status + controls                                                                       |
-| Menu bar        | `[startup_manager/menubar.py](startup_manager/menubar.py)` — rumps app showing dynamic `up/total` count, service list, quit confirmation                                             |
+| Menu bar        | `[startup_manager/menubar.py](startup_manager/menubar.py)` — dynamic `up/total` count, start/stop all, quit confirmation                          |
 | Port doctor     | `[startup_manager/doctor.py](startup_manager/doctor.py)` — registry conflict detection + live listener audit per TCP port                                                             |
 | Login autostart | `[startup_manager/__main__.py](startup_manager/__main__.py)` — 5-pass retry + `[startup_manager/watcher.py](startup_manager/watcher.py)` (45s interval)                               |
 | LaunchAgent     | `[launchagents/com.startup-apps.manager.plist.template](launchagents/com.startup-apps.manager.plist.template)` — `KeepAlive`, installed by `[scripts/install.sh](scripts/install.sh)` |
@@ -119,30 +119,33 @@ flowchart TD
 
 ---
 
-## Current State (Complete)
+## Current State
 
-- All planned work merged; daily use requires no further action
-- Reboot e2e validates dynamic visible service count + `db_connected=true`
+- **`v1.0` shipped** — tagged on `main`, remote branches pruned (only `main` remains)
+- **OrbStack** replaces Docker Desktop; Docker Desktop uninstalled
+- **8/8** visible services healthy at login; reboot e2e validates dynamic count + `db_connected=true`
 - Doctor audits all registered TCP ports and reports conflicts
+- Menu bar: **Start autostart**, **Stop all services**, **Quit manager** (manager-only)
 - OMLX: brew-managed at [http://127.0.0.1:8000/admin](http://127.0.0.1:8000/admin) (no Login Item)
 
 ---
 
 ## Next Steps
 
-### Tier 1 — Close out v1.0 (recommended, low effort)
+### Tier 1 — Housekeeping (complete)
 
-1. **Tag release `v1.0`** on `main` to mark the stable baseline
-2. **Add `PROJECT_SUMMARY.md`** to the repo (this document) for onboarding and future reference
-3. **Prune remote branches** on GitHub (`feat/*`, `fix/*`) now that local branches are deleted
+1. ~~Tag release `v1.0`~~ — done
+2. ~~Add `PROJECT_SUMMARY.md`~~ — done
+3. ~~Prune remote branches~~ — done (only `main` on GitHub)
+4. ~~OrbStack migration + Docker Desktop removal~~ — done
 
 ### Tier 2 — Operational polish (optional)
 
-| Item                              | Files to touch                                                                                                               | Value                                                              |
-| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| **Stop all services** menu action | `[startup_manager/menubar.py](startup_manager/menubar.py)`, `[startup_manager/supervisor.py](startup_manager/supervisor.py)` | Explicit shutdown counterpart to "Quit manager"                    |
-| **macOS notifications**           | `[startup_manager/watcher.py](startup_manager/watcher.py)` or `[startup_manager/menubar.py](startup_manager/menubar.py)`     | Alert when count drops below expected total                        |
-| **Expand doctor**                 | `[scripts/doctor.sh](scripts/doctor.sh)`                                                                                     | Check OrbStack login setting, stale PIDs (port audit shipped)      |
+| Item                              | Status  | Value                                                              |
+| --------------------------------- | ------- | ------------------------------------------------------------------ |
+| **Stop all services** menu action | Done    | Stops all managed apps; manager keeps running                      |
+| **macOS notifications**           | Pending | Alert when count drops below expected total                        |
+| **Expand doctor**                 | Partial | Port audit shipped; OrbStack login + stale PID checks remain       |
 
 ### Tier 3 — Engineering hygiene (optional)
 
@@ -157,9 +160,4 @@ flowchart TD
 - New service onboarding workflow (template in `services.yaml` + start/stop script)
 - Multi-machine sync of `services.yaml`
 - Replacing shell scripts with pure-Python supervisors
-
----
-
-## Suggested Immediate Action
-
-If you approve this plan, the first deliverable would be adding `PROJECT_SUMMARY.md` to the repo (derived from this plan) and optionally tagging `v1.0`. No code changes are required for continued daily use.
+- Dashboard live port occupancy column

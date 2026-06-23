@@ -8,7 +8,7 @@ import rumps
 from .config import load_config, visible_services
 from .dashboard import run_dashboard_thread
 from .health import ServiceState, check_all
-from .supervisor import start_autostart_services
+from .supervisor import start_autostart_services, stop_all_services
 
 
 APP_NAME = "StartupApps"
@@ -27,6 +27,21 @@ class StartupAppsMenuBar(rumps.App):
     def open_dashboard(self, _: rumps.MenuItem) -> None:
         webbrowser.open(self.dashboard_url)
 
+    def stop_all(self, _: rumps.MenuItem) -> None:
+        if rumps.alert(
+            title="Stop all managed services?",
+            message=(
+                "This stops OMLX, taOS, Cursor observability, HA Agent, 9router, "
+                "OpenCode, Lemonade, Postgres containers, and OrbStack.\n\n"
+                "The menu bar manager and dashboard keep running."
+            ),
+            ok="Stop all",
+            cancel="Cancel",
+        ):
+            messages = stop_all_services(self.config)
+            rumps.notification("Startup Apps", "All services stopped", "\n".join(messages[:3]))
+            self.refresh_menu(None)
+
     def start_autostart(self, _: rumps.MenuItem) -> None:
         messages = start_autostart_services(self.config)
         rumps.notification("Startup Apps", "Autostart complete", "\n".join(messages[:3]))
@@ -42,6 +57,7 @@ class StartupAppsMenuBar(rumps.App):
         items: list[rumps.MenuItem | None] = [
             None,
             rumps.MenuItem("Quit manager…", callback=self.quit_app),
+            rumps.MenuItem("Stop all services…", callback=self.stop_all),
             rumps.MenuItem("Start autostart services", callback=self.start_autostart),
             None,
             rumps.MenuItem("Service status (tap to open UI)", callback=None),

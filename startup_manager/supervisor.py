@@ -225,7 +225,11 @@ def _service_is_up(service: Service) -> bool:
 
 
 def _autostart_order(config: AppConfig) -> list[Service]:
-    services = [s for s in config.services.values() if s.autostart]
+    return _services_order(config, autostart_only=True)
+
+
+def _services_order(config: AppConfig, autostart_only: bool = False) -> list[Service]:
+    services = [s for s in config.services.values() if not autostart_only or s.autostart]
     by_id = {s.id: s for s in services}
     visited: set[str] = set()
     ordered: list[Service] = []
@@ -235,7 +239,7 @@ def _autostart_order(config: AppConfig) -> list[Service]:
             return
         for dep_id in service.depends_on:
             dep = by_id.get(dep_id) or config.services.get(dep_id)
-            if dep and dep.autostart:
+            if dep and (not autostart_only or dep.autostart):
                 visit(dep)
         visited.add(service.id)
         ordered.append(service)
@@ -243,6 +247,32 @@ def _autostart_order(config: AppConfig) -> list[Service]:
     for service in services:
         visit(service)
     return ordered
+
+
+def _quit_orbstack(service: Service) -> str:
+    mark_manually_stopped(service)
+    result = subprocess.run(
+        ["osascript", "-e", 'tell application "OrbStack" to quit'],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return f"{service.name} quit requested (may already be stopped)"
+    return f"Quit {service.name}"
+
+
+def stop_all_services(config: AppConfig) -> list[str]:
+    messages: list[str] = []
+    for service in reversed(_services_order(config)):
+        try:
+            if service.manager == "orbstack":
+                messages.append(_quit_orbstack(service))
+            else:
+                messages.append(stop_service(service))
+        except SupervisorError as exc:
+            messages.append(f"{service.name}: {exc}")
+    return messages
 
 
 def _stop_by_pid(service: Service) -> str:

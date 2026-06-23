@@ -70,6 +70,8 @@ Edit `config/services.yaml` to change ports, then restart the manager.
 .venv/bin/python -m startup_manager autostart
 ```
 
+Menu bar actions: **Start autostart services**, **Stop all services** (stops managed apps; manager keeps running), **Quit manager** (manager only).
+
 Per-service scripts:
 
 ```bash
