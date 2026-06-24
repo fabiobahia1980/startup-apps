@@ -68,6 +68,7 @@ def _run_script(script: Path, env: dict[str, str] | None = None) -> subprocess.C
 def start_service(config: AppConfig, service: Service) -> str:
     ensure_state_dirs()
     clear_manually_stopped(service)
+    peer_messages = _stop_exclusive_peers(config, service)
     for dep_id in service.depends_on:
         dep = config.services.get(dep_id)
         if dep:
@@ -77,16 +78,18 @@ def start_service(config: AppConfig, service: Service) -> str:
         if not service.brew_service:
             raise SupervisorError(f"{service.name} missing brew_service")
         if _brew_service_running(service.brew_service):
-            return f"Brew service {service.brew_service} already running"
-        result = subprocess.run(
-            ["brew", "services", "start", service.brew_service],
-            text=True,
-            capture_output=True,
-            check=False,
-        )
-        if result.returncode != 0:
-            raise SupervisorError(result.stderr.strip() or result.stdout.strip())
-        return f"Started brew service {service.brew_service}"
+            message = f"Brew service {service.brew_service} already running"
+        else:
+            result = subprocess.run(
+                ["brew", "services", "start", service.brew_service],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            if result.returncode != 0:
+                raise SupervisorError(result.stderr.strip() or result.stdout.strip())
+            message = f"Started brew service {service.brew_service}"
+        return _join_start_messages(peer_messages, message)
 
     if service.manager == "orbstack":
         if not service.start_script:
@@ -95,7 +98,7 @@ def start_service(config: AppConfig, service: Service) -> str:
         if result.returncode != 0:
             detail = result.stderr.strip() or result.stdout.strip()
             raise SupervisorError(detail or f"Failed to start {service.name}")
-        return result.stdout.strip() or f"Started {service.name}"
+        return _join_start_messages(peer_messages, result.stdout.strip() or f"Started {service.name}")
 
     if service.manager == "docker":
         if not service.docker_compose_service:
@@ -113,7 +116,7 @@ def start_service(config: AppConfig, service: Service) -> str:
         )
         if result.returncode != 0:
             raise SupervisorError(result.stderr.strip() or result.stdout.strip())
-        return f"Started docker service {service.docker_compose_service}"
+        return _join_start_messages(peer_messages, f"Started docker service {service.docker_compose_service}")
 
     if service.manager == "process":
         if not service.start_script:
@@ -122,14 +125,15 @@ def start_service(config: AppConfig, service: Service) -> str:
         if result.returncode != 0:
             detail = result.stderr.strip() or result.stdout.strip()
             raise SupervisorError(detail or f"Failed to start {service.name}")
-        return result.stdout.strip() or f"Started {service.name}"
+        return _join_start_messages(peer_messages, result.stdout.strip() or f"Started {service.name}")
 
     raise SupervisorError(f"Unknown manager: {service.manager}")
 
 
-def stop_service(service: Service) -> str:
+def stop_service(service: Service, *, record_manual_stop: bool = True) -> str:
     ensure_state_dirs()
-    mark_manually_stopped(service)
+    if record_manual_stop:
+        mark_manually_stopped(service)
 
     if service.manager == "brew":
         if not service.brew_service:
@@ -198,11 +202,37 @@ def start_autostart_with_retries(
     return messages
 
 
+def _join_start_messages(peer_messages: list[str], message: str) -> str:
+    parts = [item for item in peer_messages if item]
+    parts.append(message)
+    return "\n".join(parts)
+
+
+def _stop_exclusive_peers(config: AppConfig, service: Service) -> list[str]:
+    messages: list[str] = []
+    for peer_id in service.exclusive_with:
+        peer = config.services.get(peer_id)
+        if not peer or not _service_is_up(peer):
+            continue
+        messages.append(stop_service(peer, record_manual_stop=False))
+    return messages
+
+
+def is_blocked_by_exclusive_peer(config: AppConfig, service: Service) -> bool:
+    for peer_id in service.exclusive_with:
+        peer = config.services.get(peer_id)
+        if peer and _service_is_up(peer):
+            return True
+    return False
+
+
 def _start_missing_autostart_services(config: AppConfig) -> list[str]:
     messages: list[str] = []
     order = _autostart_order(config)
     for service in order:
         if is_manually_stopped(service):
+            continue
+        if is_blocked_by_exclusive_peer(config, service):
             continue
         if _service_is_up(service):
             continue
