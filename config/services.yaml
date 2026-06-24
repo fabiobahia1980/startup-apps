@@ -4,6 +4,7 @@
 # Reserved ranges:
 #   3300-3399 OpenCode
 #   8000-8099  LLM / observability UIs
+#   8100-8199  ComfyUI
 #   13300-13399 Lemonade
 #   20100-20199 9router
 #   9090       startup-apps dashboard (this manager)
@@ -26,7 +27,7 @@ services:
 
   omlx:
     name: OMLX
-    description: Local MLX inference server (brew service; disable oMLX Login Item to avoid port 8000 conflict)
+    description: Local MLX inference server (brew service; mutually exclusive with ComfyUI for RAM)
     port: 8000
     health_path: /v1/models
     ui_path: /admin
@@ -34,6 +35,22 @@ services:
     manager: brew
     brew_service: jundot/omlx/omlx
     project: /Users/oibaf/Projects/local-llm
+    exclusive_with:
+      - comfyui
+
+  comfyui:
+    name: ComfyUI
+    description: Image generation UI (stops OMLX while running to save RAM)
+    port: 8188
+    health_path: /system_stats
+    ui_path: /
+    autostart: false
+    manager: process
+    project: /Users/oibaf/Projects/comfyui
+    start_script: scripts/services/start-comfyui.sh
+    stop_script: scripts/services/stop-comfyui.sh
+    exclusive_with:
+      - omlx
 
   taos:
     name: taOS

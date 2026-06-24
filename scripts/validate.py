@@ -44,6 +44,10 @@ def validate_config() -> list[str]:
             if dep_id not in config.services:
                 errors.append(f"{service_id}: depends_on unknown service {dep_id!r}")
 
+        for peer_id in service.exclusive_with:
+            if peer_id not in config.services:
+                errors.append(f"{service_id}: exclusive_with unknown service {peer_id!r}")
+
         if service.manager == "brew" and not service.brew_service:
             errors.append(f"{service_id}: brew manager requires brew_service")
         if service.manager == "docker" and not service.docker_compose_service:

@@ -7,6 +7,7 @@ Unified manager for local AI/observability services: login startup, menu bar sta
 | Service | Port | UI |
 |---------|------|-----|
 | OMLX | 8000 | http://127.0.0.1:8000/admin |
+| ComfyUI | 8188 | http://127.0.0.1:8188/ |
 | taOS | 6969 | http://127.0.0.1:6969/ |
 | HA Agent Observability | 8080 | http://127.0.0.1:8080/ |
 | Cursor AI Observability | 8081 | http://127.0.0.1:8081/ |
@@ -85,6 +86,7 @@ Per-service scripts:
 - **OrbStack** starts automatically at login (before Postgres containers). Enable **Start at login** in OrbStack settings for faster startup. Uninstall Docker Desktop to avoid conflicts with the Docker socket.
 - **HA Postgres** runs on host port **5434** (OrbStack maps `5434:5432`) so it does not conflict with Homebrew `postgresql@16` on 5432. Set `DATABASE_URL=...@127.0.0.1:5434/...` in `ha-local-agent-mm/.env`.
 - **OMLX** is started by the Homebrew service (`brew services start jundot/omlx/omlx`). If the **oMLX** app is also a macOS Login Item, it will try to start a second server on port 8000. Use the brew instance at http://127.0.0.1:8000/admin and remove the login item: `./scripts/fix-omlx-login-item.sh` (or System Settings → General → Login Items).
+- **ComfyUI** and **OMLX** are mutually exclusive (only one runs at a time to save RAM). Starting ComfyUI stops OMLX; starting OMLX stops ComfyUI. OMLX autostarts at login; start ComfyUI manually from the dashboard when needed.
 - **Dev UI port 8082** is shared by HA agent and Cursor dashboard Trunk dev servers — only one can use it at a time during development.
 
 ## Doctor

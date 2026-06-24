@@ -12,6 +12,7 @@ def make_service(
     name: str | None = None,
     manager: str = "process",
     depends_on: list[str] | None = None,
+    exclusive_with: list[str] | None = None,
     autostart: bool = True,
     extra_ports: list[ExtraPort] | None = None,
     project: Path | None = None,
@@ -27,6 +28,7 @@ def make_service(
         manager=manager,
         project=project or Path("/tmp"),
         depends_on=depends_on or [],
+        exclusive_with=exclusive_with or [],
         extra_ports=extra_ports or [],
     )
 

@@ -33,7 +33,7 @@ class StartupAppsMenuBar(rumps.App):
         if rumps.alert(
             title="Stop all managed services?",
             message=(
-                "This stops OMLX, taOS, Cursor observability, HA Agent, 9router, "
+                "This stops OMLX, ComfyUI, taOS, Cursor observability, HA Agent, 9router, "
                 "OpenCode, Lemonade, Postgres containers, and OrbStack.\n\n"
                 "The menu bar manager and dashboard keep running."
             ),
@@ -117,7 +117,7 @@ class StartupAppsMenuBar(rumps.App):
             title="Quit Startup Apps manager?",
             message=(
                 "This quits the menu bar icon and dashboard only.\n\n"
-                "OMLX, taOS, Cursor observability, HA Agent, 9router, OpenCode, Lemonade, and OrbStack keep running.\n\n"
+                "OMLX, ComfyUI, taOS, Cursor observability, HA Agent, 9router, OpenCode, Lemonade, and OrbStack keep running.\n\n"
                 "The login startup agent will restart this manager automatically."
             ),
             ok="Quit manager",

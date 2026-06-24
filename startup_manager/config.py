@@ -37,6 +37,7 @@ class Service:
     brew_service: str | None = None
     docker_compose_service: str | None = None
     depends_on: list[str] = field(default_factory=list)
+    exclusive_with: list[str] = field(default_factory=list)
     extra_ports: list[ExtraPort] = field(default_factory=list)
     hidden: bool = False
 
@@ -98,6 +99,7 @@ def _parse_service(service_id: str, raw: dict[str, Any]) -> Service:
         brew_service=raw.get("brew_service"),
         docker_compose_service=raw.get("docker_compose_service"),
         depends_on=raw.get("depends_on", []),
+        exclusive_with=raw.get("exclusive_with", []),
         extra_ports=extra_ports,
         hidden=raw.get("hidden", False),
     )
